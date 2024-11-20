@@ -1,0 +1,17 @@
+{
+    "manifest_version": 3,
+    "name": "Auto Fill Blanks",
+    "version": "1.0",
+    "description": "Automatically fills in blank answers",
+    "permissions": [
+      "activeTab",
+      "scripting"
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "content_scripts": [{
+      "matches": ["*://www.doddsre.com/*"],
+      "js": ["content.js"]
+    }]
+  }
