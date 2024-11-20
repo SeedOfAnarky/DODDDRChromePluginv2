@@ -1,76 +1,66 @@
-function fillInBlanks() {
-    console.log('fillInBlanks function started');
-  
-    const answers = [
-      {
-        before: "Agency is the",
-        after: "of every",
-        answer: "heart"
-      },
-      {
-        before: "defines the roles and responsibilities of the",
-        after: ".",
-        answer: "parties"
-      },
-      {
-        before: "Agency is a",
-        after: "in which",
-        answer: "relationship"
-      },
-      {
-        before: "business dealings with third",
-        after: ".",
-        answer: "parties"
-      },
-      {
-        before: "A licensee",
-        after: "expeditiously",
-        answer: "shall"
-      },
-      {
-        before: "Salesperson or broker is not",
-        after: "to have",
-        answer: "required"
-      },
-      {
-        before: "broker's",
-        after: ".",
-        answer: "license"
-      },
-      {
-        before: "Because of the",
-        after: "closed",
-        answer: "transaction"
-      },
-      {
-        before: "brokerage to the",
-        after: ".",
-        answer: "buyer"
+function enableButton() {
+  console.log('enableButton function called');
+  const footer = document.querySelector('footer');
+  if (footer) {
+    console.log('Footer found');
+    const button = footer.querySelector('a.button.disabled');
+    if (button) {
+      console.log('Disabled button found');
+      button.classList.remove('disabled');
+      button.removeAttribute('disabled');
+    }
+  }
+}
+
+function handleQuiz() {
+  console.log('handleQuiz called');
+  if (window.location.href.includes('doddsre.com/quiz')) {
+    // Add complete quiz button
+    const form = document.querySelector("form");
+    if (form && !form.querySelector('input[name="quiz_complete"]')) {
+      const button = document.createElement("input");
+      button.type = "submit";
+      button.name = "quiz_complete";
+      button.value = "Complete Quiz";
+      button.classList.add("complete-quiz-button");
+      const resetButton = form.querySelector("input[name='quiz_reset']");
+      if (resetButton) {
+        resetButton.parentNode.insertBefore(button, resetButton.nextSibling);
       }
-    ];
-  
-    const quizBoxes = document.querySelectorAll('.su-box-content');
-    console.log(`Found ${quizBoxes.length} quiz boxes`);
-  
-    quizBoxes.forEach((box, index) => {
-      console.log(`Processing box ${index + 1}`);
-      const text = box.innerHTML;
-      
-      answers.forEach(({before, after, answer}) => {
-        if (text.includes(before) && text.includes(after)) {
-          console.log(`Found match: ${before}___${after}`);
-          const regex = new RegExp(`(${before})\\s+(${after})`, 'g');
-          box.innerHTML = text.replace(regex, `$1 <span style="color: green; font-weight: bold;">${answer}</span> $2`);
-        }
-      });
+    }
+
+    // Set all radio buttons to false initially
+    const radios = document.querySelectorAll('input[type="radio"][value="false"]');
+    radios.forEach(radio => radio.checked = true);
+
+    // Listen for quiz completion
+    form.addEventListener('submit', async (e) => {
+      if (e.submitter.name === 'quiz_complete') {
+        // After form submission, look for correct answers
+        setTimeout(() => {
+          const correctAnswers = document.querySelectorAll('.answer_message');
+          correctAnswers.forEach(answer => {
+            if (answer.textContent.includes('Right Answer: True')) {
+              const questionDiv = answer.closest('li');
+              const trueRadio = questionDiv.querySelector('input[value="true"]');
+              if (trueRadio) trueRadio.checked = true;
+            }
+          });
+        }, 1000);
+      }
     });
   }
-  
-  // Execute immediately
-  console.log('Content script loaded');
-  fillInBlanks();
-  
-  // Add click handler for debugging
-  document.addEventListener('click', (e) => {
-    console.log('Click detected:', e.target);
-  });
+}
+
+// Check auto settings on page load
+chrome.storage.sync.get(['autoEnable', 'autoQuiz'], function(data) {
+  if (data.autoEnable) enableButton();
+  if (data.autoQuiz) handleQuiz();
+});
+
+// Listen for messages from popup
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  if (request.action === 'enableQuizButton') {
+    handleQuiz();
+  }
+});

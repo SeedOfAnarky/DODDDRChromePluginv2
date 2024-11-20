@@ -1,17 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Auto Fill Blanks Debug",
+  "name": "Dodd's Helper",
   "version": "1.0",
-  "description": "Automatically fills in blank answers with debugging",
-  "permissions": [
-    "activeTab",
-    "scripting"
-  ],
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["*://*.doddsre.com/*"],
   "action": {
     "default_popup": "popup.html"
   },
-  "content_scripts": [{
-    "matches": ["*://www.doddsre.com/*"],
+"content_scripts": [{
+    "matches": ["*://*.doddsre.com/*"],
     "js": ["content.js"]
-  }]
+}]
 }
