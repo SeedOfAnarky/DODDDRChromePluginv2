@@ -1,43 +1,45 @@
-document.getElementById('fillAnswers').addEventListener('click', async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      function: fillInBlanks
-    });
-  });
+document.getElementById('debugButton').addEventListener('click', async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   
-  function fillInBlanks() {
-    const answers = {
-      "Agency is the __ of every real estate transaction": "heart",
-      "defines the roles and responsibilities of the __": "parties",
-      "Agency is a __ in which one person": "relationship",
-      "business dealings with third __": "parties",
-      "A licensee __ expeditiously performs": "shall",
-      "Salesperson or broker is not __ to have expertise": "required",
-      "obtain the salesperson's or broker's __": "license",
-      "Because of the __ closed approximately": "transaction",
-      "statutory duties are owed by the brokerage to the __": "buyer"
-    };
-  
-    for (const [phrase, answer] of Object.entries(answers)) {
-      const elements = document.evaluate(
-        `//text()[contains(., "${phrase}")]`,
-        document,
-        null,
-        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-        null
-      );
-  
-      for (let i = 0; i < elements.snapshotLength; i++) {
-        const element = elements.snapshotItem(i);
-        const parent = element.parentNode;
-        const newHtml = element.textContent.replace(
-          '__',
-          `<span style="color: green; font-weight: bold;">${answer}</span>`
-        );
-        const wrapper = document.createElement('span');
-        wrapper.innerHTML = newHtml;
-        parent.replaceChild(wrapper, element);
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: () => {
+      console.log('Debug button clicked');
+      
+      const quizBoxes = document.querySelectorAll('.su-box-content');
+      console.log(`Found ${quizBoxes.length} quiz boxes`);
+      
+      function getAnswers(boxText) {
+        // Get the full question text
+        const questionMatch = boxText.match(/Fill in the Blank:\s*(.*?)(?=\s*$)/);
+        if (!questionMatch) return null;
+        
+        console.log('Question:', questionMatch[1]);
+        
+        // Match patterns to determine answers
+        if (boxText.includes('Agency is the')) return ['heart', 'parties'];
+        if (boxText.includes('Agency is a')) return ['relationship', 'parties'];
+        if (boxText.includes('A licensee')) return ['shall'];
+        if (boxText.includes('Salesperson or broker is not')) return ['required', 'license'];
+        if (boxText.includes('Because of the')) return ['transaction', 'buyer'];
+        return null;
       }
+
+      quizBoxes.forEach((box, index) => {
+        const answers = getAnswers(box.textContent);
+        const inputs = box.querySelectorAll('input');
+        
+        if (answers && inputs.length > 0) {
+          console.log(`Box ${index + 1} answers:`, answers);
+          inputs.forEach((input, inputIndex) => {
+            if (answers[inputIndex]) {
+              input.value = answers[inputIndex];
+              input.style.color = 'green';
+              input.style.fontWeight = 'bold';
+            }
+          });
+        }
+      });
     }
-  }
+  });
+});
